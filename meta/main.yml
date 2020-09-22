@@ -1,0 +1,24 @@
+---
+galaxy_info:
+  author: Dmitrii Kashin
+  description: logstash in docker container
+  role_name: logstash
+  license: MIT
+
+  min_ansible_version: 2.8
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+
+  galaxy_tags:
+    - elasticsearch
+
+dependencies:
+  - role: freehck.mkdir
+    vars:
+      mkdir_directories:
+        - "{{ logstash_srv_dir }}"
+        - "{{ logstash_pipeline_yml_dir }}"
+        - "{{ logstash_pipeline_dir }}"

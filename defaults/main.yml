@@ -1,0 +1,44 @@
+---
+logstash_ct_name: "logstash"
+logstash_ct_image: "docker.elastic.co/logstash/logstash:7.8.1"
+logstash_ct_hostname: "{{ inventory_hostname }}"
+
+logstash_bind_ip: "{{ backnet_ip | default('127.0.0.1') }}"
+logstash_beats_port: "5044"
+logstash_gelf_port: "12201"
+
+logstash_ct_restart_policy: "always"
+logstash_ct_state: "started"
+logstash_ct_restart: "{{ ct_restart | default(false) }}"
+logstash_ct_pull: "{{ ct_pull | default(true) }}"
+logstash_ct_recreate: "{{ ct_recreate | default(false) }}"
+
+logstash_ct_log_driver: "json-file"
+logstash_ct_log_max_size: "10m"
+logstash_ct_log_max_file: "3"
+
+logstash_env_file_template: "env.j2"
+logstash_srv_dir: "/srv/{{ logstash_ct_name }}"
+logstash_env_file: "{{ logstash_srv_dir }}/env"
+
+# container internal (just in case if it changes)
+logstash_ct_internal_config_dir: "/usr/share/logstash/config"
+logstash_ct_internal_pipeline_dir: "/usr/share/logstash/pipeline"
+
+# pipeline.yml
+logstash_pipeline_yml_template: "pipeline.yml.j2"
+logstash_pipeline_yml_dir: "{{ logstash_srv_dir }}"
+logstash_pipeline_yml_file: "pipeline.yml"
+logstash_pipeline_yml: "{{ logstash_pipeline_yml_dir }}/{{ logstash_pipeline_yml_file }}"
+
+# pipelines
+logstash_pipeline_dir: "{{ logstash_srv_dir }}/pipeline"
+logstash_pipelines:
+  - template: pipelines/logstash.conf.j2
+    filename: logstash.conf
+
+# additional configuration options
+logstash_java_xms: "4g"
+logstash_java_xmx: "4g"
+
+

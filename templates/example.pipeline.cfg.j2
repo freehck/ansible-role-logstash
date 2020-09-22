@@ -1,0 +1,41 @@
+input {
+  beats {
+    port => 5044
+  }
+}
+
+filter {
+  grok {
+    match => { "message" => '%{IPORHOST:clientip} - (%{WORD:http_username}|-) \[%{HTTPDATE:timestamp}\] \"%{WORD:verb} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}" %{NUMBER:response} (?:%{NUMBER:bytes}|-) (?:"(?:%{URI:referrer}|-)"|%{QS:referrer}) %{QS:useragent}( %{QS:xforwardedfor} debug: %{NUMBER:duration} (%{NUMBER:upstream_duration}|-) (%{IPORHOST:upstreamtip}:%{NUMBER:upstreamport}|-))?'
+    }
+    overwrite => [ "message" ]
+  }
+  mutate {
+    convert => ["response", "integer"]
+    convert => ["bytes", "integer"]
+    convert => ["duration", "float"]
+    convert => ["upstream_duration", "float"]
+  }
+  geoip {
+    source => "clientip"
+    target => "geoip"
+    add_tag => [ "nginx-geoip" ]
+  }
+  date {
+    match => [ "timestamp" , "dd/MMM/YYYY:HH:mm:ss Z" ]
+    remove_field => [ "timestamp" ]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => "{{ backnet_ip | default('192.168.0.1') }}:9200"
+    user => "{{ logstash_user | default('logstash') }}"
+    password => "{{ logstash_password | default('logstash') }}"
+    manage_template => false
+    index => "myapp-%{+YYYY.MM.dd}"
+  }
+  stdout {
+    codec => rubydebug
+  }
+}

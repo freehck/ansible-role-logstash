@@ -1,0 +1,44 @@
+---
+
+- name: create env file
+  template:
+    src: "{{ logstash_env_file_template }}"
+    dest: "{{ logstash_env_file }}"
+    mode: 0640
+
+- name: create {{ logstash_pipeline_yml_file }} file
+  template:
+    src: "{{ logstash_pipeline_yml_template }}"
+    dest: "{{ logstash_pipeline_yml }}"
+    mode: 0640
+
+- name: create pipelines
+  template:
+    src: "{{ item.template }}"
+    dest: "{{ logstash_pipeline_dir }}/{{ item.filename }}"
+    mode: 0640
+    owner: '1000'
+    group: '1000'
+  loop: "{{ logstash_pipelines }}"
+
+- name: deploy logstash container
+  docker_container:
+    name: "{{ logstash_ct_name }}"
+    image: "{{ logstash_ct_image }}"
+    hostname: "{{ logstash_ct_hostname }}"
+    env_file: "{{ logstash_env_file }}"
+    ports:
+      - "{{ logstash_bind_ip }}:{{ logstash_beats_port }}:{{ logstash_beats_port }}"
+      - "{{ logstash_bind_ip }}:{{ logstash_gelf_port }}:{{ logstash_gelf_port }}/udp"
+    volumes:
+      - "{{ logstash_pipeline_yml }}:{{ logstash_ct_internal_config_dir }}/pipeline.yml:ro"
+      - "{{ logstash_pipeline_dir }}:{{ logstash_ct_internal_pipeline_dir }}:ro"
+    log_driver: "{{ logstash_ct_log_driver }}"
+    log_options:
+      max-size: "{{ logstash_ct_log_max_size }}"
+      max-file: "{{ logstash_ct_log_max_file }}"
+    restart_policy: "{{ logstash_ct_restart_policy }}"
+    state: "{{ logstash_ct_state }}"
+    restart: "{{ logstash_ct_restart }}"
+    pull: "{{ logstash_ct_pull }}"
+    recreate: "{{ logstash_ct_recreate }}"
